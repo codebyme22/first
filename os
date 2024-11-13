@@ -390,99 +390,100 @@ int main() {
 }
 
 4.	Implementation of Classical problems (reader writer)  using Threads and Mutex
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <vector>
+#include <chrono>
 
-#define MAX_READERS 5
-#define MAX_WRITERS 5
+using namespace std;
 
-pthread_mutex_t read_write_lock;
-pthread_mutex_t count_lock;
-int read_count = 0; // Number of active readers
-int shared_data = 0; // Shared resource
+std::mutex resource_mutex;   // Mutex for protecting the shared resource
+std::mutex reader_count_mutex; // Mutex for protecting reader_count
+int reader_count = 0;        // Count of active readers
+int shared_data = 0;         // The shared resource
 
-// Reader thread function
-void *reader(void *arg) {
-    int reader_id = *((int *)arg);
+// Function for the reader
+void reader(int reader_id) {
+    while (true) {
+        // Lock the reader count mutex to safely increment reader_count
+        reader_count_mutex.lock();
+        reader_count++;
+        
+        // If this is the first reader, lock the resource
+        if (reader_count == 1) {
+            resource_mutex.lock();
+        }
+        reader_count_mutex.unlock();
 
-    // Lock for reading
-    pthread_mutex_lock(&count_lock);
-    read_count++;
-    if (read_count == 1) {
-        pthread_mutex_lock(&read_write_lock); // Lock the resource if it's the first reader
+        // Reading from the shared resource
+        std::cout << "Reader " << reader_id << " is reading data: " << shared_data << std::endl;
+
+        // Simulate reading time
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        // Finished reading, lock reader_count mutex to safely decrement reader_count
+        reader_count_mutex.lock();
+        reader_count--;
+        
+        // If this is the last reader, unlock the resource for writers
+        if (reader_count == 0) {
+            resource_mutex.unlock();
+        }
+        reader_count_mutex.unlock();
+
+        // Simulate time between reading
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
-    pthread_mutex_unlock(&count_lock);
-
-    // Reading
-    printf("Reader %d: reading data = %d\n", reader_id, shared_data);
-    sleep(1); // Simulate reading time
-
-    // Unlock for reading
-    pthread_mutex_lock(&count_lock);
-    read_count--;
-    if (read_count == 0) {
-        pthread_mutex_unlock(&read_write_lock); // Unlock the resource if it's the last reader
-    }
-    pthread_mutex_unlock(&count_lock);
-
-    pthread_exit(0);
 }
 
-// Writer thread function
-void *writer(void *arg) {
-    int writer_id = *((int *)arg);
+// Function for the writer
+void writer(int writer_id) {
+    while (true) {
+        // Lock the resource mutex to gain exclusive access to the shared resource
+        resource_mutex.lock();
 
-    // Lock for writing
-    pthread_mutex_lock(&read_write_lock);
-    
-    // Writing
-    shared_data++;
-    printf("Writer %d: writing data = %d\n", writer_id, shared_data);
-    sleep(1); // Simulate writing time
-    
-    pthread_mutex_unlock(&read_write_lock);
-    pthread_exit(0);
+        // Writing to the shared resource
+        shared_data++;
+        std::cout << "Writer " << writer_id << " has written data: " << shared_data << std::endl;
+
+        // Simulate writing time
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
+        // Unlock the resource mutex after writing
+        resource_mutex.unlock();
+
+        // Simulate time between writing
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    }
 }
 
 int main() {
-    pthread_t readers[MAX_READERS], writers[MAX_WRITERS];
-    int reader_ids[MAX_READERS], writer_ids[MAX_WRITERS];
-
-    // Initialize mutexes
-    pthread_mutex_init(&read_write_lock, NULL);
-    pthread_mutex_init(&count_lock, NULL);
+    // Create multiple reader and writer threads
+    std::vector<std::thread> readers, writers;
+    int num_readers = 5;
+    int num_writers = 2;
 
     // Create reader threads
-    for (int i = 0; i < MAX_READERS; i++) {
-        reader_ids[i] = i + 1;
-        pthread_create(&readers[i], NULL, reader, &reader_ids[i]);
+    for (int i = 0; i < num_readers; i++) {
+        readers.push_back(std::thread(reader, i + 1));
     }
 
     // Create writer threads
-    for (int i = 0; i < MAX_WRITERS; i++) {
-        writer_ids[i] = i + 1;
-        pthread_create(&writers[i], NULL, writer, &writer_ids[i]);
+    for (int i = 0; i < num_writers; i++) {
+        writers.push_back(std::thread(writer, i + 1));
     }
 
-    // Wait for all readers to finish
-    for (int i = 0; i < MAX_READERS; i++) {
-        pthread_join(readers[i], NULL);
+    // Join all threads (in a real application, we would need to handle stopping conditions)
+    for (auto& th : readers) {
+        th.join();
     }
-
-    // Wait for all writers to finish
-    for (int i = 0; i < MAX_WRITERS; i++) {
-        pthread_join(writers[i], NULL);
+    for (auto& th : writers) {
+        th.join();
     }
-
-    // Destroy mutexes
-    pthread_mutex_destroy(&read_write_lock);
-    pthread_mutex_destroy(&count_lock);
 
     return 0;
 }
-
 
 5.	Implementation of Classical problems( producer consumer)  using Threads and Mutex
 
