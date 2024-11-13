@@ -1,5 +1,5 @@
 
-1.	Any shell scripting program. 
+1-one.	Any shell scripting program. 
 
 1. Factorial (Using Recursion):
 bash
@@ -16,7 +16,7 @@ factorial() {
 echo "Enter a number: "
 read num
 echo "Factorial of $num is $(factorial $num)"
-2. Palindrome (Number and String):
+2-two. Palindrome (Number and String):
 bash
 Copy code
 #!/bin/bash
@@ -33,7 +33,7 @@ is_palindrome() {
 echo "Enter a number or string: "
 read input
 is_palindrome $input
-3. Bubble Sort:
+3-three. Bubble Sort:
 bash
 Copy code
 #!/bin/bash
@@ -55,7 +55,7 @@ bubble_sort() {
 echo "Enter numbers separated by spaces: "
 read -a numbers
 bubble_sort "${numbers[@]}"
-4. Count Occurrences of a Substring:
+4-four. Count Occurrences of a Substring:
 bash
 Copy code
 #!/bin/bash
@@ -70,7 +70,7 @@ read main_str
 echo "Enter the substring to find: "
 read sub_str
 echo "Occurrences of '$sub_str': $(count_substring "$main_str" "$sub_str")"
-5. Sum of Digits:
+5-five. Sum of Digits:
 bash
 Copy code
 #!/bin/bash
